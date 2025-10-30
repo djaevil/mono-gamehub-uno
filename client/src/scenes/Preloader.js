@@ -7,31 +7,20 @@ export class Preloader extends Phaser.Scene {
     var progressBar = this.add.graphics();
     var progressBox = this.add.graphics();
 
-    progressBox.fillStyle(0x222222, 0.8);
-    progressBox.fillRect(width / 2 - 215, height / 2 - 25, 450, 50);
+    progressBox.fillStyle(0x222222, 0.3);
+    progressBox.fillRect(256, 384, 512, 30);
 
-    var width = this.cameras.main.width;
-    var height = this.cameras.main.height;
-    var loadingText = this.make.text({
-      x: width / 2,
-      y: height / 2 - 50,
-      text: "Loading...",
-      style: {
-        font: "20px monospace",
-        fill: "#ffffff",
-      },
+    var loadingText = this.add.text(512, 384 - 35, "Loading..", {
+      fontFamily: "monospace",
+      fontSize: 44,
+      color: "#b42020ff",
     });
     loadingText.setOrigin(0.5, 0.5);
 
     this.load.on("progress", function (progress) {
       progressBar.clear();
       progressBar.fillStyle(0xffffff, 1);
-      progressBar.fillRect(
-        width / 2 - 215,
-        height / 2 - 25,
-        430 * progress,
-        30
-      );
+      progressBar.fillRect(256, 384, 512 * progress, 30);
     });
 
     this.load.setPath("/assets/number-cards/");
@@ -69,7 +58,7 @@ export class Preloader extends Phaser.Scene {
   }
 
   create() {
-    var dLogo = this.add.image(450, 250, "djaevil-logo").setScale(0.3);
+    var dLogo = this.add.image(512, 384, "djaevil-logo").setScale(0.75);
     this.tweens.add({
       targets: dLogo,
       alpha: 1,
@@ -80,9 +69,9 @@ export class Preloader extends Phaser.Scene {
           target: "MainMenu",
           duration: 300,
           moveBelow: true,
-          onComplete: () => {
-            this.cameras.main.setAlpha(0);
-          },
+          // onComplete: () => {
+          //   this.cameras.main.setAlpha(0);
+          // },
         });
       },
     });

@@ -14,8 +14,9 @@ socket.on("connect", () => {
 // Basic Phaser config
 const config = {
   type: Phaser.AUTO,
-  width: 900, // 450
-  height: 500, // 250
+  width: 1024, // 512
+  height: 768, //384
+  backgroundColor: "#000000ff",
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
