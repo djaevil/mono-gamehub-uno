@@ -1,15 +1,18 @@
 import Phaser from "phaser";
 import { io } from "socket.io-client";
+import RexUIPlugin from "phaser3-rex-plugins/templates/ui/ui-plugin";
 
 import { Boot } from "./scenes/Boot.js";
 import { Preloader } from "./scenes/Preloader.js";
 import { MainMenu } from "./scenes/MainMenu.js";
+import { HostScene } from "./scenes/HostScene.js";
+import { JoinScene } from "./scenes/JoinScene.js";
 
-const socket = io("http://localhost:3333");
+// const socket = io("http://localhost:3333");
 
-socket.on("connect", () => {
-  console.log("Connected:", socket.id);
-});
+// socket.on("connect", () => {
+//   console.log("Connected:", socket.id);
+// });
 
 // Basic Phaser config
 const config = {
@@ -21,7 +24,20 @@ const config = {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
-  scene: [Boot, Preloader, MainMenu],
+  parent: "app",
+  dom: {
+    createContainer: true,
+  },
+  scene: [Boot, Preloader, MainMenu, HostScene, JoinScene],
+  plugins: {
+    scene: [
+      {
+        key: "rexUI",
+        plugin: RexUIPlugin,
+        mapping: "rexUI",
+      },
+    ],
+  },
 };
 
 new Phaser.Game(config);

@@ -15,7 +15,7 @@ export class Preloader extends Phaser.Scene {
       fontSize: 44,
       color: "#b42020ff",
     });
-    loadingText.setOrigin(0.5, 0.5);
+    loadingText.setOrigin(0.5);
 
     this.load.on("progress", function (progress) {
       progressBar.clear();
@@ -51,10 +51,11 @@ export class Preloader extends Phaser.Scene {
       loadingText.destroy();
     });
 
-    this.load.image("loadimage", "loadimg.png");
-    for (var i = 0; i < 2250; i++) {
-      this.load.image("loadimage" + i, "loadimg.png");
-    }
+    // // fake loading bar - ENABLE IN PROD
+    // this.load.image("loadimage", "loadimg.png");
+    // for (var i = 0; i < 2250; i++) {
+    //   this.load.image("loadimage" + i, "loadimg.png");
+    // }
   }
 
   create() {
@@ -62,16 +63,13 @@ export class Preloader extends Phaser.Scene {
     this.tweens.add({
       targets: dLogo,
       alpha: 1,
-      duration: 2500,
+      duration: 500, // 2500 - CHANGE IN PROD
       onComplete: () => {
         dLogo.destroy();
         this.scene.transition({
           target: "MainMenu",
           duration: 300,
           moveBelow: true,
-          // onComplete: () => {
-          //   this.cameras.main.setAlpha(0);
-          // },
         });
       },
     });
