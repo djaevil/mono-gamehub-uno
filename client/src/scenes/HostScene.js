@@ -1,4 +1,4 @@
-import { createUIButton } from "../helpers.js";
+import { createUIButton } from "../helpers";
 export class HostScene extends Phaser.Scene {
   constructor() {
     super("HostScene");
@@ -28,13 +28,24 @@ export class HostScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
+    const pNameTitle = this.add
+      .text(512, 295, "Enter player name", {
+        fontFamily: "monospace",
+        fontSize: "22px",
+        color: "#000000ff",
+        padding: { x: 85, y: 10 },
+        align: "center",
+      })
+      .setOrigin(0.5);
+
     const pName = this.add
-      .text(512, 334, "Enter player name", {
+      .text(512, 334, "...", {
         fontFamily: "monospace",
         fontSize: "22px",
         color: "#000000ff",
         backgroundColor: "#a5a5a5ff",
-        padding: { x: 85, y: 10 },
+        fixedWidth: 350,
+        padding: { x: 0, y: 10 },
         align: "center",
       })
       .setOrigin(0.5);
@@ -98,7 +109,7 @@ export class HostScene extends Phaser.Scene {
       if (index === 0) {
         this.scene.start("MainMenu");
       } else if (index === 1) {
-        console.log("CONTINUE");
+        this.scene.start("LobbyScene");
       }
     });
   }

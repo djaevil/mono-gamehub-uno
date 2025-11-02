@@ -7,6 +7,7 @@ import { Preloader } from "./scenes/Preloader.js";
 import { MainMenu } from "./scenes/MainMenu.js";
 import { HostScene } from "./scenes/HostScene.js";
 import { JoinScene } from "./scenes/JoinScene.js";
+import { LobbyScene } from "./scenes/LobbyScene.js";
 
 // const socket = io("http://localhost:3333");
 
@@ -28,7 +29,7 @@ const config = {
   dom: {
     createContainer: true,
   },
-  scene: [Boot, Preloader, MainMenu, HostScene, JoinScene],
+  scene: [Boot, Preloader, MainMenu, HostScene, JoinScene, LobbyScene],
   plugins: {
     scene: [
       {
