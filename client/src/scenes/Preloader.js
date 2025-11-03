@@ -67,7 +67,7 @@ export class Preloader extends Phaser.Scene {
       onComplete: () => {
         dLogo.destroy();
         this.scene.transition({
-          target: "LobbyScene", // "MainMenu" - CHANGE IN PROD
+          target: "HostScene", // "MainMenu" - CHANGE IN PROD
           duration: 300,
           moveBelow: true,
         });

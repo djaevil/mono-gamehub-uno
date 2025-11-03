@@ -1,5 +1,4 @@
 import Phaser from "phaser";
-import { io } from "socket.io-client";
 import RexUIPlugin from "phaser3-rex-plugins/templates/ui/ui-plugin";
 
 import { Boot } from "./scenes/Boot.js";
@@ -9,13 +8,6 @@ import { HostScene } from "./scenes/HostScene.js";
 import { JoinScene } from "./scenes/JoinScene.js";
 import { LobbyScene } from "./scenes/LobbyScene.js";
 
-// const socket = io("http://localhost:3333");
-
-// socket.on("connect", () => {
-//   console.log("Connected:", socket.id);
-// });
-
-// Basic Phaser config
 const config = {
   type: Phaser.AUTO,
   width: 1024, // 512
