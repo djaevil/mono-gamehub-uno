@@ -1,5 +1,5 @@
 import { getRedisClient } from "./redisClient.js";
-import randomCode from "../utils/codeGenerator.js";
+import { redisHelpers, utilHelpers } from "../helpers/helpers.js";
 
 const redis = getRedisClient();
 
@@ -9,10 +9,10 @@ export async function createLobby(socketId) {
     let attempts = 0;
 
     do {
-      lobbyCode = randomCode();
+      lobbyCode = utilHelpers.randomCode();
       attempts++;
       if (attempts > 20) {
-        throw new Error("Error with lobby code generation!");
+        throw new Error("Error with lobby code generation! Try again later.");
       }
     } while (await redis.exists(`lobby:${lobbyCode}`));
 
@@ -38,24 +38,14 @@ export async function joinLobby(socketId, lobbyCode) {
       throw new Error("Invalid lobby code!");
     }
 
-    const findLobby = await redis.exists(`lobby:${lobbyCode}`);
+    const lobbyData = await redisHelpers.getLobbyData(redis, lobbyCode);
 
-    if (findLobby !== 1) {
+    if (lobbyData === null) {
       throw new Error("Lobby doesn't exist!");
     }
 
-    const lobbyData = await redis.hGetAll(`lobby:${lobbyCode}`);
-
     if (lobbyData.status === "in-game") {
       throw new Error("Can't join this lobby!");
-    }
-
-    let players = [];
-    try {
-      players = JSON.parse(lobbyData.players);
-    } catch (err) {
-      console.error("Invalid players data:", err);
-      players = [];
     }
 
     if (players.length >= 4) {
@@ -75,6 +65,32 @@ export async function joinLobby(socketId, lobbyCode) {
   }
 }
 
-// leaveLobby function
-// getLobby helper function (maybe in /utils)
-// etc......
+export async function leaveLobby(socketId) {
+  try {
+    const getLobbyFromSocket = await redis.hGet("socket:lobby", socketId);
+
+    if (getLobbyFromSocket === null) {
+      throw new Error("Player/SocketId not in active lobby!");
+    }
+
+    const lobbyData = await redisHelpers.getLobbyData(
+      redis,
+      getLobbyFromSocket
+    );
+
+    if (lobbyData === null) {
+      throw new Error("Lobby doesn't exist!"); // ?
+    }
+
+    // players.length > 0
+    // no ->
+    // call remove lobby:lobbycode and remove socket:lobby -> return success: true
+    // yes ->
+    // check if socketId is in players,
+    // no -> ???
+    // yes ->
+    // check if socketId === hostId
+    // no -> remove socketId from players
+    // yes ->
+  } catch (error) {}
+}
