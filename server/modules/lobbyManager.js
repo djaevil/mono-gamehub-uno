@@ -23,7 +23,7 @@ export async function createLobby(socketId) {
     });
 
     await redis.hSet("socket:lobby", socketId, lobbyCode);
-    await redis.sAdd("active:lobbies", lobbyCode);
+    await redis.sAdd("active:lobbies", lobbyCode); // needed?
 
     return { success: true, lobbyCode, players: [socketId], status: "waiting" };
   } catch (error) {
@@ -41,7 +41,7 @@ export async function joinLobby(socketId, lobbyCode) {
     const lobbyData = await redisHelpers.getLobbyData(redis, lobbyCode);
 
     if (lobbyData === null) {
-      throw new Error("Lobby doesn't exist!");
+      throw new Error("Lobby doesn't exist!"); // more efficient than using exists() at the moment because lobby:lobbycode hash has very few fields to fetch
     }
 
     if (lobbyData.status === "in-game") {
@@ -70,7 +70,7 @@ export async function leaveLobby(socketId) {
     const getLobbyFromSocket = await redis.hGet("socket:lobby", socketId);
 
     if (getLobbyFromSocket === null) {
-      throw new Error("Player/SocketId not in active lobby!");
+      throw new Error("SocketId not in any active lobby!");
     }
 
     const lobbyData = await redisHelpers.getLobbyData(
@@ -79,18 +79,21 @@ export async function leaveLobby(socketId) {
     );
 
     if (lobbyData === null) {
-      throw new Error("Lobby doesn't exist!"); // ?
+      throw new Error("Lobby doesn't exist!"); // clean socket:lobby hash?
     }
 
-    // players.length > 0
-    // no ->
-    // call remove lobby:lobbycode and remove socket:lobby -> return success: true
-    // yes ->
-    // check if socketId is in players,
-    // no -> ???
-    // yes ->
-    // check if socketId === hostId
-    // no -> remove socketId from players
-    // yes ->
-  } catch (error) {}
+    const isHost = socketId === lobbyData.hostId;
+    const isInPlayers = lobbyData.players.includes(socketId);
+    const isEmpty = lobbyData.players.length === 0;
+    const isAlone = isHost && lobbyData.players.length === 1;
+
+    if (!isInPlayers) {
+      throw new Error("SocketId is not in lobby players!");
+    }
+
+    if (isEmpty) {
+    }
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
 }
