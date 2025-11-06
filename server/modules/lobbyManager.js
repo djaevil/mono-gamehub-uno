@@ -92,6 +92,10 @@ export async function leaveLobby(socketId) {
     }
 
     if (isEmpty) {
+      await redisHelpers.cleanupLobby();
+    }
+
+    if (!isHost) {
     }
   } catch (error) {
     return { success: false, message: error.message };

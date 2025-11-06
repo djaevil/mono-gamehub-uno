@@ -10,8 +10,8 @@ export async function getLobbyData(redis, lobbyCode) {
   let players = [];
   try {
     players = JSON.parse(lobbyData.players);
-  } catch (err) {
-    console.error("Invalid players data:", err);
+  } catch (error) {
+    console.error("Invalid players data:", error);
     players = [];
   }
 
@@ -22,4 +22,10 @@ export async function getLobbyData(redis, lobbyCode) {
   };
 }
 
-export async function cleanupLobby(lobbyCode, socketId, options) {}
+export async function cleanupLobby(
+  lobbyCode,
+  socketId,
+  delLobby,
+  delMapping,
+  delActive
+) {}
