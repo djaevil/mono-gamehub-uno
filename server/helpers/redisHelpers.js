@@ -23,9 +23,9 @@ export async function getLobbyData(redis, lobbyCode) {
 }
 
 export async function cleanupLobby(
+  redis,
   lobbyCode,
   socketId,
   delLobby,
-  delMapping,
-  delActive
+  delMapping
 ) {}

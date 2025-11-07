@@ -23,7 +23,6 @@ export async function createLobby(socketId) {
     });
 
     await redis.hSet("socket:lobby", socketId, lobbyCode);
-    await redis.sAdd("active:lobbies", lobbyCode); // needed?
 
     return { success: true, lobbyCode, players: [socketId], status: "waiting" };
   } catch (error) {
@@ -34,14 +33,14 @@ export async function createLobby(socketId) {
 
 export async function joinLobby(socketId, lobbyCode) {
   try {
-    if (typeof lobbyCode !== "string" || lobbyCode.length === 0) {
-      throw new Error("Invalid lobby code!");
+    if (typeof lobbyCode !== "string" || lobbyCode.length !== 6) {
+      throw new Error("Invalid lobby code!"); // add validation layer later?
     }
 
     const lobbyData = await redisHelpers.getLobbyData(redis, lobbyCode);
 
     if (lobbyData === null) {
-      throw new Error("Lobby doesn't exist!"); // more efficient than using exists() at the moment because lobby:lobbycode hash has very few fields to fetch
+      throw new Error("Lobby doesn't exist!"); // using instead of exists() because lobby:lobbycode hash has very few fields to fetch
     }
 
     if (lobbyData.status === "in-game") {
@@ -55,7 +54,10 @@ export async function joinLobby(socketId, lobbyCode) {
     }
 
     players.push(socketId);
-    await redis.hSet(`lobby:${lobbyCode}`, "players", JSON.stringify(players));
+    await redis.hSet(`lobby:${lobbyCode}`, {
+      players: JSON.stringify(players),
+      status: "ready",
+    });
     await redis.hSet("socket:lobby", socketId, lobbyCode);
 
     return { success: true, lobbyCode, players, status: "ready" };
@@ -79,7 +81,13 @@ export async function leaveLobby(socketId) {
     );
 
     if (lobbyData === null) {
-      throw new Error("Lobby doesn't exist!"); // clean socket:lobby hash?
+      await redisHelpers.cleanupLobby(
+        redis,
+        getLobbyFromSocket,
+        socketId,
+        false,
+        true
+      );
     }
 
     const isHost = socketId === lobbyData.hostId;
