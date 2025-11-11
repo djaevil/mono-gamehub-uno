@@ -1,5 +1,5 @@
 import { getRedisClient } from "./redisClient.js";
-import { redisHelpers, utilHelpers } from "../helpers/helpers.js";
+import { redisHelpers, utils } from "../helpers/helpers.js";
 
 const redis = getRedisClient();
 
@@ -9,12 +9,15 @@ export async function createLobby(socketId) {
     let attempts = 0;
 
     do {
-      lobbyCode = utilHelpers.randomCode();
+      lobbyCode = utils.randomCode();
       attempts++;
-      if (attempts > 20) {
+      if (attempts > 5) {
+        // increase and/or optimise when scaling?
         throw new Error("Error with lobby code generation! Try again later.");
       }
     } while (await redis.exists(`lobby:${lobbyCode}`));
+
+    await redis.hSet("socket:lobby", socketId, lobbyCode);
 
     await redis.hSet(`lobby:${lobbyCode}`, {
       hostId: socketId,
@@ -22,90 +25,139 @@ export async function createLobby(socketId) {
       status: "waiting",
     });
 
-    await redis.hSet("socket:lobby", socketId, lobbyCode);
-
-    return { success: true, lobbyCode, players: [socketId], status: "waiting" };
+    return utils.responseHelper.data("CREATED", "Lobby has been created", {
+      lobbyCode,
+      players: [socketId],
+      status: "waiting",
+    });
   } catch (error) {
-    console.error("Error creating lobby:", error);
-    return { success: false, message: error.message };
+    console.error("Unexpected error in createLobby: ", error);
+    return utils.responseHelper.error(
+      "Unexpected error while creating lobby: ",
+      error.message
+    );
   }
 }
 
 export async function joinLobby(socketId, lobbyCode) {
   try {
     if (typeof lobbyCode !== "string" || lobbyCode.length !== 6) {
-      throw new Error("Invalid lobby code!"); // add validation layer later?
+      return utils.responseHelper.noData("INVALID_CODE", "Invalid lobby code!"); // add validation layer later?
     }
 
+    // using instead of exists() because lobby:lobbycode hash has very few fields to fetch
     const lobbyData = await redisHelpers.getLobbyData(redis, lobbyCode);
 
     if (lobbyData === null) {
-      throw new Error("Lobby doesn't exist!"); // using instead of exists() because lobby:lobbycode hash has very few fields to fetch
+      return utils.responseHelper.noData("MISSING", "Lobby doesn't exist!");
     }
 
     if (lobbyData.status === "in-game") {
-      throw new Error("Can't join this lobby!");
+      return utils.responseHelper.noData(
+        "IN_GAME",
+        "Lobby is currently in-game!"
+      );
     }
 
     if (players.length >= 4) {
-      throw new Error("This lobby is full!");
+      return utils.responseHelper.noData("FULL", "Lobby is currently full!");
     } else if (players.includes(socketId)) {
-      throw new Error("Player is already in lobby!");
+      throw new Error("Player is already in the lobby!");
     }
-
     players.push(socketId);
+
+    await redis.hSet("socket:lobby", socketId, lobbyCode);
     await redis.hSet(`lobby:${lobbyCode}`, {
       players: JSON.stringify(players),
       status: "ready",
     });
-    await redis.hSet("socket:lobby", socketId, lobbyCode);
 
-    return { success: true, lobbyCode, players, status: "ready" };
+    return utils.responseHelper.data("JOINED", "Player has joined the lobby!", {
+      lobbyCode,
+      players,
+      status: "ready",
+    });
   } catch (error) {
-    console.error("Error joining lobby: ", error);
-    return { success: false, message: error.message };
+    console.error("Unexpected error in joinLobby: ", error);
+    return utils.responseHelper.error(
+      "Unexpected error joining lobby: ",
+      error.message
+    );
   }
 }
 
 export async function leaveLobby(socketId) {
   try {
-    const getLobbyFromSocket = await redis.hGet("socket:lobby", socketId);
+    const lobbyCode = await redis.hGet("socket:lobby", socketId);
 
-    if (getLobbyFromSocket === null) {
-      throw new Error("SocketId not in any active lobby!");
+    if (lobbyCode === null) {
+      throw new Error("SocketId not linked to any lobbies!");
     }
 
-    const lobbyData = await redisHelpers.getLobbyData(
-      redis,
-      getLobbyFromSocket
-    );
+    const lobbyData = await redisHelpers.getLobbyData(redis, lobbyCode);
 
-    if (lobbyData === null) {
+    if (lobbyData === null || !lobbyData.players.includes(socketId)) {
       await redisHelpers.cleanupLobby(
         redis,
-        getLobbyFromSocket,
+        lobbyCode,
         socketId,
-        false,
-        true
+        true,
+        null,
+        false
+      );
+
+      return utils.responseHelper.noData(
+        "NO_LOBBY",
+        "Mapping cleaned, no lobby"
       );
     }
 
-    const isHost = socketId === lobbyData.hostId;
-    const isInPlayers = lobbyData.players.includes(socketId);
     const isEmpty = lobbyData.players.length === 0;
-    const isAlone = isHost && lobbyData.players.length === 1;
-
-    if (!isInPlayers) {
-      throw new Error("SocketId is not in lobby players!");
-    }
+    const isHost = socketId === lobbyData.hostId;
+    const isAlone = lobbyData.players.length === 1;
 
     if (isEmpty) {
-      await redisHelpers.cleanupLobby();
+      await redisHelpers.cleanupLobby(
+        redis,
+        lobbyCode,
+        socketId,
+        true,
+        null,
+        true
+      );
+      return utils.responseHelper.noData(
+        "EMPTY",
+        "Cleaned mapping and lobby, empty lobby"
+      );
     }
 
-    if (!isHost) {
+    if (!isAlone && !isHost) {
+      players = players.filter((p) => p !== socketId);
+
+      await redisHelpers.cleanupLobby(
+        redis,
+        lobbyCode,
+        socketId,
+        true,
+        players,
+        false
+      );
+      return utils.responseHelper.noData("LEFT", "Player left lobby");
+    } else {
+      await redisHelpers.cleanupLobby(
+        redis,
+        lobbyCode,
+        socketId,
+        true,
+        false,
+        true
+      );
+      return utils.responseHelper.noData("DELETED", "Host left, lobby deleted"); // might add logic for host reassignment
     }
   } catch (error) {
-    return { success: false, message: error.message };
+    return utils.responseHelper.error(
+      "Unexpected error in leaveLobby: ",
+      error.message
+    );
   }
 }

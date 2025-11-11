@@ -26,6 +26,21 @@ export async function cleanupLobby(
   redis,
   lobbyCode,
   socketId,
-  delLobby,
-  delMapping
-) {}
+  delMapping,
+  newPlayers,
+  delLobby
+) {
+  const multi = redis.multi();
+
+  if (delMapping === true) {
+    multi.hDel("socket:lobby", socketId);
+  }
+
+  if (delLobby === true) {
+    multi.del(`lobby:${lobbyCode}`);
+  } else if (newPlayers !== null) {
+    multi.hSet(`lobby:${lobbyCode}`, "players", JSON.stringify(newPlayers));
+  }
+
+  await multi.exec();
+}
