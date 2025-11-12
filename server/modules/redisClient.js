@@ -4,11 +4,11 @@ import { createAdapter } from "@socket.io/redis-adapter";
 let pubClient;
 let subClient;
 
-export function initRedisClient(ioServer, redisPort) {
+export function initRedisClient(io, redisPort) {
   pubClient = new Redis(redisPort);
   subClient = pubClient.duplicate();
 
-  ioServer.adapter(createAdapter(pubClient, subClient));
+  io.adapter(createAdapter(pubClient, subClient));
 
   pubClient.on("error", (err) => {
     console.log("Error: ", err);

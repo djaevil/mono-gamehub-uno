@@ -1,5 +1,5 @@
 export function randomCode() {
-  return JSON.stringify(Math.floor(100000 + Math.random() * 900000)); //6-digit code STRING for lobbies
+  return String(Math.floor(100000 + Math.random() * 900000)); //6-digit code STRING for lobbies
 }
 
 export const responseHelper = {

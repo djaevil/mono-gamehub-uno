@@ -41,6 +41,8 @@ export async function createLobby(socketId) {
 
 export async function joinLobby(socketId, lobbyCode) {
   try {
+    let newPlayers;
+
     if (typeof lobbyCode !== "string" || lobbyCode.length !== 6) {
       return utils.responseHelper.noData("INVALID_CODE", "Invalid lobby code!"); // add validation layer later?
     }
@@ -59,22 +61,24 @@ export async function joinLobby(socketId, lobbyCode) {
       );
     }
 
+    newPlayers = lobbyData.players;
+
     if (players.length >= 4) {
       return utils.responseHelper.noData("FULL", "Lobby is currently full!");
     } else if (players.includes(socketId)) {
       throw new Error("Player is already in the lobby!");
     }
-    players.push(socketId);
+    newPlayers.push(socketId);
 
     await redis.hSet("socket:lobby", socketId, lobbyCode);
     await redis.hSet(`lobby:${lobbyCode}`, {
-      players: JSON.stringify(players),
+      players: JSON.stringify(newPlayers),
       status: "ready",
     });
 
     return utils.responseHelper.data("JOINED", "Player has joined the lobby!", {
       lobbyCode,
-      players,
+      newPlayers,
       status: "ready",
     });
   } catch (error) {
@@ -88,6 +92,8 @@ export async function joinLobby(socketId, lobbyCode) {
 
 export async function leaveLobby(socketId) {
   try {
+    let newPlayers;
+
     const lobbyCode = await redis.hGet("socket:lobby", socketId);
 
     if (lobbyCode === null) {
@@ -132,14 +138,14 @@ export async function leaveLobby(socketId) {
     }
 
     if (!isAlone && !isHost) {
-      players = players.filter((p) => p !== socketId);
+      newPlayers = lobbyData.players.filter((p) => p !== socketId);
 
       await redisHelpers.cleanupLobby(
         redis,
         lobbyCode,
         socketId,
         true,
-        players,
+        newPlayers,
         false
       );
       return utils.responseHelper.noData("LEFT", "Player left lobby");
