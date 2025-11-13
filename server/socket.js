@@ -13,6 +13,6 @@ export default function initSockets(server, clientURL, redisPort) {
 
   io.on("connection", (socket) => {
     console.log("Player connected:", socket.id);
-    registerLobbyEvents(socket);
+    registerLobbyEvents(io, socket);
   });
 }

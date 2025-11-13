@@ -1,10 +1,10 @@
 import { getRedisClient } from "./redisClient.js";
 import { redisHelpers, utils } from "../helpers/helpers.js";
 
-const redis = getRedisClient();
-
 export async function createLobby(socketId) {
   try {
+    const redis = getRedisClient();
+
     let lobbyCode;
     let attempts = 0;
 
@@ -26,7 +26,7 @@ export async function createLobby(socketId) {
     });
 
     return utils.responseHelper.data("CREATED", "Lobby has been created", {
-      lobbyCode,
+      lobbyCode: lobbyCode,
       players: [socketId],
       status: "waiting",
     });
@@ -41,31 +41,25 @@ export async function createLobby(socketId) {
 
 export async function joinLobby(socketId, lobbyCode) {
   try {
+    const redis = getRedisClient();
     let newPlayers;
-
-    if (typeof lobbyCode !== "string" || lobbyCode.length !== 6) {
-      return utils.responseHelper.noData("INVALID_CODE", "Invalid lobby code!"); // add validation layer later?
-    }
 
     // using instead of exists() because lobby:lobbycode hash has very few fields to fetch
     const lobbyData = await redisHelpers.getLobbyData(redis, lobbyCode);
 
     if (lobbyData === null) {
-      return utils.responseHelper.noData("MISSING", "Lobby doesn't exist!");
+      return utils.responseHelper.noData("FAIL", "Lobby doesn't exist!");
     }
 
     if (lobbyData.status === "in-game") {
-      return utils.responseHelper.noData(
-        "IN_GAME",
-        "Lobby is currently in-game!"
-      );
+      return utils.responseHelper.noData("FAIL", "Lobby is currently in-game!");
     }
 
     newPlayers = lobbyData.players;
 
-    if (players.length >= 4) {
-      return utils.responseHelper.noData("FULL", "Lobby is currently full!");
-    } else if (players.includes(socketId)) {
+    if (newPlayers.length >= 4) {
+      return utils.responseHelper.noData("FAIL", "Lobby is currently full!");
+    } else if (newPlayers.includes(socketId)) {
       throw new Error("Player is already in the lobby!");
     }
     newPlayers.push(socketId);
@@ -77,8 +71,8 @@ export async function joinLobby(socketId, lobbyCode) {
     });
 
     return utils.responseHelper.data("JOINED", "Player has joined the lobby!", {
-      lobbyCode,
-      newPlayers,
+      lobbyCode: lobbyCode,
+      players: newPlayers,
       status: "ready",
     });
   } catch (error) {
@@ -92,6 +86,7 @@ export async function joinLobby(socketId, lobbyCode) {
 
 export async function leaveLobby(socketId) {
   try {
+    const redis = getRedisClient();
     let newPlayers;
 
     const lobbyCode = await redis.hGet("socket:lobby", socketId);
@@ -118,9 +113,11 @@ export async function leaveLobby(socketId) {
       );
     }
 
-    const isEmpty = lobbyData.players.length === 0;
+    const playerAmount = lobbyData.players.length;
+    const isEmpty = playerAmount === 0;
     const isHost = socketId === lobbyData.hostId;
-    const isAlone = lobbyData.players.length === 1;
+    const isAlone = playerAmount === 1;
+    const status = playerAmount > 2 ? "ready" : "waiting";
 
     if (isEmpty) {
       await redisHelpers.cleanupLobby(
@@ -148,7 +145,11 @@ export async function leaveLobby(socketId) {
         newPlayers,
         false
       );
-      return utils.responseHelper.noData("LEFT", "Player left lobby");
+      return utils.responseHelper.data("LEFT", "Player left lobby", {
+        lobbyCode: lobbyCode,
+        players: newPlayers,
+        status: status,
+      });
     } else {
       await redisHelpers.cleanupLobby(
         redis,
@@ -158,7 +159,13 @@ export async function leaveLobby(socketId) {
         false,
         true
       );
-      return utils.responseHelper.noData("DELETED", "Host left, lobby deleted"); // might add logic for host reassignment
+      return utils.responseHelper.data(
+        "DELETED",
+        "Host or last player left, lobby deleted",
+        {
+          lobbyCode: lobbyCode,
+        }
+      ); // might add logic for host reassignment
     }
   } catch (error) {
     return utils.responseHelper.error(
