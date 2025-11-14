@@ -1,4 +1,4 @@
-import { createPlayerPanel, createUIButton } from "../helpers";
+import { createPlayerPanel, createUIButton } from "../utils/helpers";
 
 export class LobbyScene extends Phaser.Scene {
   constructor() {
