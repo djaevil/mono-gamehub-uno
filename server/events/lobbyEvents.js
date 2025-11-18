@@ -18,7 +18,7 @@ async function handleCreateLobby(socket) {
       socket.emit("lobby_created", result.data);
       break;
     default:
-      socket.emit("unknown");
+      socket.emit("unknown", { message: "Unknown server error!" });
   }
 }
 
@@ -26,7 +26,7 @@ async function handleJoinLobby(io, socket, code) {
   const lobbyCode = String(code).trim();
 
   if (lobbyCode.length !== 6) {
-    socket.emit("user_error", "Invalid lobby code!");
+    socket.emit("user_error", { message: "Invalid lobby code!" });
   } else {
     const result = await joinLobby(socket.id, lobbyCode);
 
@@ -43,7 +43,7 @@ async function handleJoinLobby(io, socket, code) {
         socket.emit("join_failed", result.message);
         break;
       default:
-        socket.emit("unknown");
+        socket.emit("unknown", { message: "Unknown server error!" });
     }
   }
 }
@@ -69,7 +69,7 @@ async function handleLeaveLobby(io, socket) {
       socket.emit("no_lobby", result.message);
       break;
     default:
-      socket.emit("unknown");
+      socket.emit("unknown", { message: "Unknown server error!" });
   }
 }
 
@@ -92,6 +92,6 @@ async function handleDisconnect(io, socket) {
       console.log("no_lobby", result.message);
       break;
     default:
-      console.log("unknown");
+      socket.emit("unknown", { message: "Unknown server error!" });
   }
 }

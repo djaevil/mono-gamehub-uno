@@ -1,4 +1,4 @@
-import { createUIButton } from "../utils/helpers";
+import { createUIButton } from "../helpers/components";
 export class HostScene extends Phaser.Scene {
   constructor() {
     super("HostScene");
