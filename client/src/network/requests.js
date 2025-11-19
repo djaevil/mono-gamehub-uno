@@ -9,8 +9,3 @@ export function joinLobby(socket, code) {
 export function leaveLobby(socket) {
   socket.emit("leave_lobby");
 }
-
-// needed?
-export function disconnect(socket) {
-  socket.emit("disconnect");
-}
