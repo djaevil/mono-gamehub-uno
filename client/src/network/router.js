@@ -1,4 +1,5 @@
 import * as errorHandlers from "./handlers/errorHandlers.js";
+import * as lobbyHandlers from "./handlers/lobbyHandlers.js";
 
 export default function registerEventRouter(socket) {
   const eventMap = {
@@ -22,10 +23,22 @@ export default function registerEventRouter(socket) {
       handler: errorHandlers.handleUnknown,
       busEvent: "UNKNOWN",
     },
-    lobby_created: {},
-    joined_lobby: {},
-    lobby_update: {},
-    left_lobby: {},
+    lobby_created: {
+      handler: lobbyHandlers.handleLobbyCreated,
+      busEvent: "LOBBY_CREATED",
+    },
+    joined_lobby: {
+      handler: lobbyHandlers.handleJoinedLobby,
+      busEvent: "JOINED_LOBBY",
+    },
+    lobby_update: {
+      handler: lobbyHandlers.handleLobbyUpdated,
+      busEvent: "LOBBY_UPDATE",
+    },
+    left_lobby: {
+      handler: lobbyHandlers.handleLeftLobby,
+      busEvent: "LEFT_LOBBY",
+    },
   };
 
   for (const [serverEvent, { handler, busEvent }] of Object.entries(eventMap)) {

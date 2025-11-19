@@ -1,7 +1,7 @@
 // currently handling many errors similarly, might change in the future as this is only preliminary
 
 export function handleUnknown(res) {
-  console.warn("UNKNOWN", res.message);
+  console.warn("Unknown behavior!", res.message);
 
   return {
     type: "UNKNOWN",

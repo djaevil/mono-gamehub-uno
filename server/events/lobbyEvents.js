@@ -15,7 +15,7 @@ async function handleCreateLobby(socket) {
       break;
     case "CREATED":
       socket.join(result.data.lobbyCode);
-      socket.emit("lobby_created", result.data);
+      socket.emit("lobby_created", result);
       break;
     default:
       socket.emit("unknown", { message: "Unknown server error!" });
@@ -36,8 +36,8 @@ async function handleJoinLobby(io, socket, code) {
         break;
       case "JOINED":
         socket.join(result.data.lobbyCode);
-        socket.emit("joined_lobby");
-        io.to(result.data.lobbyCode).emit("lobby_update", result.data);
+        socket.emit("joined_lobby", result.message);
+        io.to(result.data.lobbyCode).emit("lobby_update", result);
         break;
       case "FAIL":
         socket.emit("join_failed", result.message);
@@ -57,11 +57,11 @@ async function handleLeaveLobby(io, socket) {
       break;
     case "LEFT":
       socket.leave(result.data.lobbyCode);
-      socket.emit("left_lobby");
-      io.to(result.data.lobbyCode).emit("lobby_update", result.data);
+      socket.emit("left_lobby", result.message);
+      io.to(result.data.lobbyCode).emit("lobby_update", result);
       break;
     case "DELETED":
-      io.to(result.data.lobbyCode).emit("left_lobby");
+      io.to(result.data.lobbyCode).emit("left_lobby", result.message);
       io.socketsLeave(result.data.lobbyCode);
       break;
     case "NO_LOBBY":
@@ -81,10 +81,10 @@ async function handleDisconnect(io, socket) {
       console.log("server_error", result);
       break;
     case "LEFT":
-      io.to(result.data.lobbyCode).emit("lobby_update", result.data);
+      io.to(result.data.lobbyCode).emit("lobby_update", result);
       break;
     case "DELETED":
-      io.to(result.data.lobbyCode).emit("left_lobby");
+      io.to(result.data.lobbyCode).emit("left_lobby", result.message);
       io.socketsLeave(result.data.lobbyCode);
       break;
     case "NO_LOBBY":
