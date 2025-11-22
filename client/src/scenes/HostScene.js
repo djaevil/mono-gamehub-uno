@@ -1,9 +1,12 @@
+import { createLobby } from "../network/requests.js";
 import { createUIButton } from "../helpers/components.js";
 export class HostScene extends Phaser.Scene {
   constructor() {
     super("HostScene");
   }
   create() {
+    this.data.set("playerName", "");
+
     this.add.image(512, 384, "background").setDisplaySize(1024, 768);
 
     const basePanel = this.rexUI.add
@@ -39,7 +42,7 @@ export class HostScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     const pName = this.add
-      .text(512, 334, "...", {
+      .text(512, 334, "", {
         fontFamily: "monospace",
         fontSize: "22px",
         color: "#000000ff",
@@ -57,6 +60,7 @@ export class HostScene extends Phaser.Scene {
             text = text.substring(0, 15);
           }
           textObject.text = text;
+          this.data.set("playerName", text);
         },
       });
     });
@@ -108,9 +112,35 @@ export class HostScene extends Phaser.Scene {
     buttonGroup.on("button.click", (button, index, pointer, event) => {
       if (index === 0) {
         this.scene.start("MainMenu");
-      } else if (index === 1) {
-        this.scene.start("LobbyScene");
+      } else if (index === 1 && this.checkName() === true) {
+        this.callLobbyCreation();
       }
     });
   }
+
+  checkName() {
+    let playerName = this.data.get("playerName") || "";
+    String(playerName).trim();
+    if (playerName.length > 0) {
+      console.log("player name: ", playerName);
+      return true;
+    } else {
+      console.log("NO PLAYER NAME!!!", playerName);
+      return false;
+    }
+  }
+
+  callLobbyCreation() {
+    createLobby();
+  }
+
+  sceneCreatedLobby() {
+    console.log("[HostScene] Lobby created:", res);
+
+    this.scene.start("LobbyScene");
+  }
+
+  sceneError() {}
+
+  cleanup() {}
 }

@@ -1,3 +1,5 @@
+const listeners = {};
+
 export function emit() {}
 
 export function on() {}
