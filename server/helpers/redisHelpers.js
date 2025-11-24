@@ -1,7 +1,7 @@
 // Redis gets passed as a parameter for better testability and scalability
 
 export async function getLobbyData(redis, lobbyCode) {
-  const lobbyData = await redis.hGetAll(`lobby:${lobbyCode}`);
+  const lobbyData = await redis.hgetall(`lobby:${lobbyCode}`);
 
   if (Object.keys(lobbyData).length === 0) {
     return null;
@@ -33,13 +33,13 @@ export async function cleanupLobby(
   const multi = redis.multi();
 
   if (delMapping === true) {
-    multi.hDel("socket:lobby", socketId);
+    multi.hdel("socket:lobby", socketId);
   }
 
   if (delLobby === true) {
     multi.del(`lobby:${lobbyCode}`);
   } else if (newPlayers !== null) {
-    multi.hSet(`lobby:${lobbyCode}`, "players", JSON.stringify(newPlayers));
+    multi.hset(`lobby:${lobbyCode}`, "players", JSON.stringify(newPlayers));
   }
 
   await multi.exec();

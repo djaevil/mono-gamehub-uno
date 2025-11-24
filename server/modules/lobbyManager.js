@@ -17,9 +17,9 @@ export async function createLobby(socketId) {
       }
     } while (await redis.exists(`lobby:${lobbyCode}`));
 
-    await redis.hSet("socket:lobby", socketId, lobbyCode);
+    await redis.hset("socket:lobby", socketId, lobbyCode);
 
-    await redis.hSet(`lobby:${lobbyCode}`, {
+    await redis.hset(`lobby:${lobbyCode}`, {
       hostId: socketId,
       players: JSON.stringify([socketId]),
       status: "waiting",
@@ -64,8 +64,8 @@ export async function joinLobby(socketId, lobbyCode) {
     }
     newPlayers.push(socketId);
 
-    await redis.hSet("socket:lobby", socketId, lobbyCode);
-    await redis.hSet(`lobby:${lobbyCode}`, {
+    await redis.hset("socket:lobby", socketId, lobbyCode);
+    await redis.hset(`lobby:${lobbyCode}`, {
       players: JSON.stringify(newPlayers),
       status: "ready",
     });
@@ -89,10 +89,13 @@ export async function leaveLobby(socketId) {
     const redis = getRedisClient();
     let newPlayers;
 
-    const lobbyCode = await redis.hGet("socket:lobby", socketId);
+    const lobbyCode = await redis.hget("socket:lobby", socketId);
 
     if (lobbyCode === null) {
-      throw new Error("SocketId not linked to any lobbies!");
+      return utils.responseHelper.noData(
+        "NO_LOBBY",
+        "SocketId not linked to any lobbies!"
+      );
     }
 
     const lobbyData = await redisHelpers.getLobbyData(redis, lobbyCode);

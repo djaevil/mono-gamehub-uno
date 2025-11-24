@@ -1,8 +1,7 @@
 import { Redis } from "ioredis";
 import { createAdapter } from "@socket.io/redis-adapter";
 
-let pubClient;
-let subClient;
+let pubClient, subClient, generalClient;
 
 export function initRedisClient(io, redisPort) {
   pubClient = new Redis(redisPort);
@@ -11,19 +10,25 @@ export function initRedisClient(io, redisPort) {
   io.adapter(createAdapter(pubClient, subClient));
 
   pubClient.on("error", (err) => {
-    console.log("Error: ", err);
+    console.log("[PubClient] Error: ", err);
   });
 
   subClient.on("error", (err) => {
-    console.log("Error: ", err);
+    console.log("[SubClient] Error: ", err);
+  });
+
+  generalClient = new Redis(redisPort);
+
+  generalClient.on("error", (err) => {
+    console.error("[GeneralClient] error:", err);
   });
 
   console.log("Redis initialized!");
 }
 
 export function getRedisClient() {
-  if (!pubClient) {
+  if (!generalClient) {
     throw new Error("Redis client not initialized yet!");
   }
-  return pubClient;
+  return generalClient;
 }
