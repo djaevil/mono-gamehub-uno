@@ -1,5 +1,6 @@
 import * as errorHandlers from "./handlers/errorHandlers.js";
 import * as lobbyHandlers from "./handlers/lobbyHandlers.js";
+import eventBus from "../eventBus.js";
 
 const eventMap = {
   server_error: {

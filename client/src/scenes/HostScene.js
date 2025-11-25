@@ -1,4 +1,5 @@
 import { createLobby } from "../network/requests.js";
+import eventBus from "../eventBus.js";
 import { createUIButton } from "../helpers/components.js";
 export class HostScene extends Phaser.Scene {
   constructor() {
@@ -116,6 +117,12 @@ export class HostScene extends Phaser.Scene {
         this.callLobbyCreation();
       }
     });
+    eventBus.on("LOBBY_CREATED", this.sceneCreatedLobby);
+    eventBus.on("USER_ERROR", this.sceneUserError);
+    eventBus.on("SERVER_ERROR", this.sceneServerError);
+
+    this.events.on("shutdown", () => this.cleanup());
+    this.events.on("destroy", () => this.cleanup());
   }
 
   checkName() {
@@ -134,13 +141,36 @@ export class HostScene extends Phaser.Scene {
     createLobby();
   }
 
-  sceneCreatedLobby() {
+  sceneCreatedLobby(res) {
     console.log("[HostScene] Lobby created:", res);
 
     this.scene.start("LobbyScene");
+    console.log("Hello");
   }
 
-  sceneError() {}
+  sceneUserError(res) {
+    console.warn("[HostScene] User error: ", res.message);
+    const userError = this.rexUI.add.toast({
+      x: 512,
+      y: 384,
+      text: res.message,
+      duration: 1000,
+    });
+  }
 
-  cleanup() {}
+  sceneServerError(res) {
+    console.error("[HostScene] Server error: ", res.message);
+    const serverError = this.rexUI.add.toast({
+      x: 512,
+      y: 384,
+      text: res.message,
+      duration: 1000,
+    });
+  }
+
+  cleanup() {
+    eventBus.off("LOBBY_CREATED", this.sceneCreatedLobby);
+    eventBus.off("USER_ERROR", this.sceneUserError);
+    eventBus.off("SERVER_ERROR", this.sceneServerError);
+  }
 }
