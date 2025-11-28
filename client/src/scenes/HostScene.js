@@ -4,6 +4,10 @@ import { createUIButton } from "../helpers/components.js";
 export class HostScene extends Phaser.Scene {
   constructor() {
     super("HostScene");
+
+    this.sceneCreatedLobby = this.sceneCreatedLobby.bind(this);
+    this.sceneUserError = this.sceneUserError.bind(this);
+    this.sceneServerError = this.sceneServerError.bind(this);
   }
   create() {
     this.data.set("playerName", "");
@@ -129,10 +133,9 @@ export class HostScene extends Phaser.Scene {
     let playerName = this.data.get("playerName") || "";
     String(playerName).trim();
     if (playerName.length > 0) {
-      console.log("player name: ", playerName);
       return true;
     } else {
-      console.log("NO PLAYER NAME!!!", playerName);
+      this.sceneUserError({ message: "Please type a username!" });
       return false;
     }
   }
@@ -149,22 +152,66 @@ export class HostScene extends Phaser.Scene {
   }
 
   sceneUserError(res) {
+    let duration = 2000;
+    let textObject;
+
     console.warn("[HostScene] User error: ", res.message);
-    const userError = this.rexUI.add.toast({
-      x: 512,
-      y: 384,
-      text: res.message,
-      duration: 1000,
+    this.rexUI.add
+      .toast({
+        x: 512,
+        y: 384,
+        text: (textObject = this.add
+          .text(512, 625, res.message, {
+            fontSize: 26,
+            color: "#fcc121ff",
+          })
+          .setOrigin(0.5)),
+      })
+      .show();
+
+    this.tweens.add({
+      targets: textObject,
+      alpha: { from: 1, to: 0.2 },
+      duration: 400,
+      yoyo: true,
+      repeat: -1,
+    });
+
+    this.time.delayedCall(duration, () => {
+      this.tweens.killTweensOf(textObject);
+      textObject.destroy();
     });
   }
 
   sceneServerError(res) {
+    let duration = 2000;
+    let textObject;
+
     console.error("[HostScene] Server error: ", res.message);
-    const serverError = this.rexUI.add.toast({
-      x: 512,
-      y: 384,
-      text: res.message,
-      duration: 1000,
+    this.rexUI.add
+      .toast({
+        x: 512,
+        y: 384,
+        text: (textObject = this.add
+          .text(512, 625, res.message, {
+            fontSize: 26,
+            color: "#ffffffff",
+          })
+          .setOrigin(0.5)),
+      })
+      .show();
+
+    this.tweens.add({
+      targets: textObject,
+      alpha: { from: 1, to: 0.2 },
+      duration: 400,
+      yoyo: true,
+      repeat: -1,
+    });
+
+    this.time.delayedCall(duration, () => {
+      this.tweens.killTweensOf(textObject);
+      textObject.destroy();
     });
   }
 
